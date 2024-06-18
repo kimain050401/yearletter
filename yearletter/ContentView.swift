@@ -54,13 +54,24 @@ struct LinedTextEditor: View {
                 .lineSpacing(13)
                 .padding(4)
                 .padding(.top, -16)
+                .toolbar{
+                    ToolbarItemGroup(placement: .keyboard){
+                        Spacer()
+                        Button(action: {
+                            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                        }, label: {
+                            Text("닫기")
+                                .font(.custom("GamjaFlower-Regular", size: 18))
+                                .foregroundColor(Color(hex: "333333"))
+                        })
+                    }
+                }
         }
     }
 }
 
 struct LineBackground: View {
     var lineCount: Int
-    
     var body: some View {
         GeometryReader { geometry in
             let lineHeight = geometry.size.height / CGFloat(lineCount)
@@ -76,8 +87,20 @@ struct LineBackground: View {
     }
 }
 
+extension String {
+    func substring(from: Int, to: Int) -> String {
+        guard from < count, to >= 0, to - from >= 0 else {
+            return ""
+        }
+        let startIndex = index(self.startIndex, offsetBy: from)
+        let endIndex = index(self.startIndex, offsetBy: to + 1)
+        return String(self[startIndex ..< endIndex])
+    }
+}
+
 struct ContentView: View {
     @State var userAnswer: String = ""
+    @State var todayDate: String = "00000000"
     var body: some View {
         ZStack{
             RoughTextureView()
@@ -86,12 +109,12 @@ struct ContentView: View {
                 Text("1년 후 나에게")
                     .font(.custom("GamjaFlower-Regular", size: 22))
                     .foregroundColor(Color(hex: "333333"))
-                Text("365일, 365개 질문")
+                Text("우리가 함께한 365일, 지금까지 365개 답변")
                     .font(.custom("GamjaFlower-Regular", size: 16))
                     .foregroundColor(Color.secondary)
                 HStack{
                     VStack(alignment: .leading, spacing: 0){
-                        Text("2024년 6월 17일,")
+                        Text("\(todayDate.substring(from: 0, to: 3))년 \(todayDate.substring(from: 4, to: 5))월 \(todayDate.substring(from: 6, to: 7))일,")
                             .font(.custom("GamjaFlower-Regular", size: 16))
                             .foregroundColor(Color.secondary)
                             .padding(.bottom, 8)
@@ -142,6 +165,23 @@ struct ContentView: View {
                 .padding(.bottom)
             }
             .padding(.horizontal)
+        }
+        .onAppear{
+            print(readTextFile())
+            var formatter = DateFormatter()
+            formatter.dateFormat = "yyyyMMdd"
+            var current_date_string = formatter.string(from: Date())
+            todayDate = current_date_string
+        }
+    }
+    func readTextFile() -> String {
+        var result = ""
+        guard let pahts = Bundle.main.path(forResource: "question.txt", ofType: nil) else { return "" }
+        do {
+            result = try String(contentsOfFile: pahts, encoding: .utf8)
+            return result
+        } catch {
+            return "Error: file read failed - \(error.localizedDescription)"
         }
     }
 }
